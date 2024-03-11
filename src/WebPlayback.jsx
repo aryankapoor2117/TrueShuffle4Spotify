@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import styled from 'styled-components';
+import styled, { keyframes } from 'styled-components';
 
 const shuffleArray = (array) => {
     // Fisher-Yates shuffle algorithm
@@ -47,44 +47,57 @@ const shuffleArray = (array) => {
   };
 
 
-const Container = styled.div`
+  const Container = styled.div`
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 1rem;
-  background-color: #e0f0ff; 
+  padding: 2rem;
+  background-color: #0c0c0c;
+  color: #fff;
+  min-height: 100vh;
 `;
 
 const PlayerContainer = styled.div`
   display: flex;
   align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  max-width: 800px;
   margin-bottom: 2rem;
+  background-color: #1c1c1c;
+  padding: 1rem;
+  border-radius: 8px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
 `;
 
 const NowPlaying = styled.div`
   display: flex;
   align-items: center;
-  margin-right: 2rem;
 `;
 
 const Cover = styled.img`
-  width: 150px;
-  height: 150px;
+  width: 80px;
+  height: 80px;
   object-fit: cover;
   border-radius: 4px;
+  margin-right: 1rem;
 `;
 
 const TrackInfo = styled.div`
-  margin-left: 1rem;
+  display: flex;
+  flex-direction: column;
 `;
 
 const TrackName = styled.div`
-  font-weight: bold;
   font-size: 1.2rem;
+  font-weight: bold;
+  margin-bottom: 0.5rem;
+  color: #3498db;
 `;
 
 const ArtistName = styled.div`
-  font-size: 0.9rem;
+  font-size: 1rem;
+  color: #bdc3c7;
 `;
 
 const Controls = styled.div`
@@ -93,20 +106,34 @@ const Controls = styled.div`
 `;
 
 const Button = styled.button`
-  background-color: transparent;
+  background-color: #3498db;
   border: none;
+  color: #fff;
   font-size: 1.2rem;
-  cursor: pointer;
+  padding: 0.5rem 1rem;
   margin: 0 0.5rem;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+
+  &:hover {
+    background-color: #2980b9;
+  }
+`;
+
+const PlaylistsContainer = styled.div`
+  width: 100%;
+  max-width: 800px;
 `;
 
 const SearchBar = styled.input`
+  width: 100%;
   padding: 0.5rem;
   font-size: 1rem;
-  border: 1px solid #ccc;
+  border: none;
   border-radius: 4px;
-  width: 100%;
-  max-width: 300px;
+  background-color: #1c1c1c;
+  color: #fff;
   margin-bottom: 1rem;
 `;
 
@@ -115,25 +142,47 @@ const PlaylistGrid = styled.div`
   grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
   grid-gap: 1rem;
 `;
+
 const PlaylistItem = styled.div`
   display: flex;
   flex-direction: column;
   align-items: center;
   text-align: center;
   cursor: pointer;
+  padding: 1rem;
+  background-color: #1c1c1c;
+  border-radius: 8px;
+  transition: background-color 0.2s;
+
+  &:hover {
+    background-color: #2c2c2c;
+  }
 `;
 
 const PlaylistCover = styled.img`
-  width: 200px;
-  height: 200px;
+  width: 150px;
+  height: 150px;
   object-fit: cover;
-  border-radius: 8px;
+  border-radius: 4px;
+  margin-bottom: 1rem;
 `;
 
-const PlaylistName = styled.span`
-  margin-top: 0.5rem;
+const PlaylistName = styled.div`
   font-size: 1rem;
-  font-family: 'Montserrat', sans-serif; // Modern font
+  font-weight: bold;
+  color: #3498db;
+`;
+
+const TempoToggle = styled.div`
+  display: flex;
+  align-items: center;
+  margin-bottom: 1rem;
+`;
+
+const TempoToggleLabel = styled.label`
+  margin-left: 0.5rem;
+  font-size: 1rem;
+  color: #bdc3c7;
 `;
 
 const track = {
@@ -334,55 +383,52 @@ function WebPlayback(props) {
                 </div>
             </>)
     } else {
-        return (
-            <Container>
-            <PlayerContainer>
-              <NowPlaying>
-                <Cover src={current_track.album.images[0].url} alt={current_track.name} />
-                <TrackInfo>
-                  <TrackName>{current_track.name}</TrackName>
-                  <ArtistName>{current_track.artists[0].name}</ArtistName>
-                </TrackInfo>
-              </NowPlaying>
-              <Controls>
-                <Button onClick={() => player.previousTrack()}>&lt;&lt;</Button>
-                <Button onClick={() => player.togglePlay()}>{is_paused ? 'PLAY' : 'PAUSE'}</Button>
-                <Button onClick={() => player.nextTrack()}>&gt;&gt;</Button>
-              </Controls>
-            </PlayerContainer>
-            <div className="playlists-container">
-          <SearchBar
-            type="text"
-            placeholder="Search playlists..."
-            value={searchTerm}
-            onChange={e => setSearchTerm(e.target.value)}
-          />
-          <h2>Your Playlists</h2>
-          <div>
-            <label>
+      return (
+        <Container>
+          <PlayerContainer>
+            <NowPlaying>
+              <Cover src={current_track.album.images[0].url} alt={current_track.name} />
+              <TrackInfo>
+                <TrackName>{current_track.name}</TrackName>
+                <ArtistName>{current_track.artists[0].name}</ArtistName>
+              </TrackInfo>
+            </NowPlaying>
+            <Controls>
+              <Button onClick={() => player.previousTrack()}>&lt;&lt;</Button>
+              <Button onClick={() => player.togglePlay()}>{is_paused ? 'PLAY' : 'PAUSE'}</Button>
+              <Button onClick={() => player.nextTrack()}>&gt;&gt;</Button>
+            </Controls>
+          </PlayerContainer>
+          <PlaylistsContainer>
+            <SearchBar
+              type="text"
+              placeholder="Search playlists..."
+              value={searchTerm}
+              onChange={e => setSearchTerm(e.target.value)}
+            />
+            <TempoToggle>
               <input
                 type="checkbox"
                 checked={sortByTempo}
                 onChange={() => setSortByTempo(!sortByTempo)}
               />
-              Sort by Tempo (Highest to Lowest)
-            </label>
-          </div>
-          <PlaylistGrid>
-            {filteredPlaylists.map(playlist => (
-              <PlaylistItem key={playlist.id} onClick={() => handlePlaylistClick(playlist.id)}>
-                <PlaylistCover
-                  src={playlist.images[0]?.url || 'https://via.placeholder.com/150'}
-                  alt={playlist.name}
-                />
-                <PlaylistName>{playlist.name}</PlaylistName>
-              </PlaylistItem>
-            ))}
-          </PlaylistGrid>
-        </div>
-          </Container>
-        );
+              <TempoToggleLabel>Sort by Tempo (Highest to Lowest)</TempoToggleLabel>
+            </TempoToggle>
+            <PlaylistGrid>
+              {filteredPlaylists.map(playlist => (
+                <PlaylistItem key={playlist.id} onClick={() => handlePlaylistClick(playlist.id)}>
+                  <PlaylistCover
+                    src={playlist.images[0]?.url || 'https://via.placeholder.com/150'}
+                    alt={playlist.name}
+                  />
+                  <PlaylistName>{playlist.name}</PlaylistName>
+                </PlaylistItem>
+              ))}
+            </PlaylistGrid>
+          </PlaylistsContainer>
+        </Container>
+      );
     }
-}
+  }
 
 export default WebPlayback
