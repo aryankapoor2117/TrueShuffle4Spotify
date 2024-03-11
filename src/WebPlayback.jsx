@@ -1,5 +1,23 @@
 import React, { useState, useEffect } from 'react';
-import styled, { keyframes } from 'styled-components';
+import styled, { createGlobalStyle, ThemeProvider } from 'styled-components';
+
+const theme = {
+  primary: '#53cbfb',
+  secondary: '#cfcfcf',
+  background: '#040404',
+  playerBackground: '#1c1c1c',
+  text: '#fff',
+};
+
+const GlobalStyle = createGlobalStyle`
+  @import url('https://fonts.googleapis.com/css2?family=Titillium+Web:wght@400;600;700&display=swap');
+
+  body {
+    font-family: 'Titillium Web', sans-serif;
+    background-color: ${props => props.theme.background};
+    color: ${props => props.theme.text};
+  }
+`;
 
 const shuffleArray = (array) => {
     // Fisher-Yates shuffle algorithm
@@ -52,8 +70,6 @@ const shuffleArray = (array) => {
   flex-direction: column;
   align-items: center;
   padding: 2rem;
-  background-color: #0c0c0c;
-  color: #fff;
   min-height: 100vh;
 `;
 
@@ -64,7 +80,7 @@ const PlayerContainer = styled.div`
   width: 100%;
   max-width: 800px;
   margin-bottom: 2rem;
-  background-color: #1c1c1c;
+  background-color: ${props => props.theme.playerBackground};
   padding: 1rem;
   border-radius: 8px;
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
@@ -90,14 +106,14 @@ const TrackInfo = styled.div`
 
 const TrackName = styled.div`
   font-size: 1.2rem;
-  font-weight: bold;
+  font-weight: 600;
   margin-bottom: 0.5rem;
-  color: #3498db;
+  color: ${props => props.theme.primary};
 `;
 
 const ArtistName = styled.div`
   font-size: 1rem;
-  color: #bdc3c7;
+  color: ${props => props.theme.secondary};
 `;
 
 const Controls = styled.div`
@@ -106,9 +122,9 @@ const Controls = styled.div`
 `;
 
 const Button = styled.button`
-  background-color: #3498db;
+  background-color: ${props => props.theme.primary};
   border: none;
-  color: #fff;
+  color: ${props => props.theme.text};
   font-size: 1.2rem;
   padding: 0.5rem 1rem;
   margin: 0 0.5rem;
@@ -117,7 +133,7 @@ const Button = styled.button`
   transition: background-color 0.2s;
 
   &:hover {
-    background-color: #2980b9;
+    background-color: ${props => props.theme.secondary};
   }
 `;
 
@@ -169,8 +185,8 @@ const PlaylistCover = styled.img`
 
 const PlaylistName = styled.div`
   font-size: 1rem;
-  font-weight: bold;
-  color: #3498db;
+  font-weight: 600;
+  color: ${props => props.theme.primary};
 `;
 
 const TempoToggle = styled.div`
@@ -384,49 +400,52 @@ function WebPlayback(props) {
             </>)
     } else {
       return (
-        <Container>
-          <PlayerContainer>
-            <NowPlaying>
-              <Cover src={current_track.album.images[0].url} alt={current_track.name} />
-              <TrackInfo>
-                <TrackName>{current_track.name}</TrackName>
-                <ArtistName>{current_track.artists[0].name}</ArtistName>
-              </TrackInfo>
-            </NowPlaying>
-            <Controls>
-              <Button onClick={() => player.previousTrack()}>&lt;&lt;</Button>
-              <Button onClick={() => player.togglePlay()}>{is_paused ? 'PLAY' : 'PAUSE'}</Button>
-              <Button onClick={() => player.nextTrack()}>&gt;&gt;</Button>
-            </Controls>
-          </PlayerContainer>
-          <PlaylistsContainer>
-            <SearchBar
-              type="text"
-              placeholder="Search playlists..."
-              value={searchTerm}
-              onChange={e => setSearchTerm(e.target.value)}
-            />
-            <TempoToggle>
-              <input
-                type="checkbox"
-                checked={sortByTempo}
-                onChange={() => setSortByTempo(!sortByTempo)}
+        <ThemeProvider theme={theme}>
+          <Container>
+            <GlobalStyle />
+            <PlayerContainer>
+              <NowPlaying>
+                <Cover src={current_track.album.images[0].url} alt={current_track.name} />
+                <TrackInfo>
+                  <TrackName>{current_track.name}</TrackName>
+                  <ArtistName>{current_track.artists[0].name}</ArtistName>
+                </TrackInfo>
+              </NowPlaying>
+              <Controls>
+                <Button onClick={() => player.previousTrack()}>&lt;&lt;</Button>
+                <Button onClick={() => player.togglePlay()}>{is_paused ? 'PLAY' : 'PAUSE'}</Button>
+                <Button onClick={() => player.nextTrack()}>&gt;&gt;</Button>
+              </Controls>
+            </PlayerContainer>
+            <PlaylistsContainer>
+              <SearchBar
+                type="text"
+                placeholder="Search playlists..."
+                value={searchTerm}
+                onChange={e => setSearchTerm(e.target.value)}
               />
-              <TempoToggleLabel>Sort by Tempo (Highest to Lowest)</TempoToggleLabel>
-            </TempoToggle>
-            <PlaylistGrid>
-              {filteredPlaylists.map(playlist => (
-                <PlaylistItem key={playlist.id} onClick={() => handlePlaylistClick(playlist.id)}>
-                  <PlaylistCover
-                    src={playlist.images[0]?.url || 'https://via.placeholder.com/150'}
-                    alt={playlist.name}
-                  />
-                  <PlaylistName>{playlist.name}</PlaylistName>
-                </PlaylistItem>
-              ))}
-            </PlaylistGrid>
-          </PlaylistsContainer>
-        </Container>
+              <TempoToggle>
+                <input
+                  type="checkbox"
+                  checked={sortByTempo}
+                  onChange={() => setSortByTempo(!sortByTempo)}
+                />
+                <TempoToggleLabel>Sort by Tempo (Highest to Lowest)</TempoToggleLabel>
+              </TempoToggle>
+              <PlaylistGrid>
+                {filteredPlaylists.map(playlist => (
+                  <PlaylistItem key={playlist.id} onClick={() => handlePlaylistClick(playlist.id)}>
+                    <PlaylistCover
+                      src={playlist.images[0]?.url || 'https://via.placeholder.com/150'}
+                      alt={playlist.name}
+                    />
+                    <PlaylistName>{playlist.name}</PlaylistName>
+                  </PlaylistItem>
+                ))}
+              </PlaylistGrid>
+            </PlaylistsContainer>
+          </Container>
+        </ThemeProvider>
       );
     }
   }
