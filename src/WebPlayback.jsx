@@ -10,34 +10,12 @@ const shuffleArray = (array) => {
     return array;
   };
   
-  const addToQueue = async (playlistId, token) => {
+  const addTracksToQueue = async (tracks, token) => {
     try {
-      const response = await fetch(`https://api.spotify.com/v1/playlists/${playlistId}/tracks`, {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
-      const data = await response.json();
-      const trackUris = data.items.map(item => item.track.uri);
+      for (const track of tracks) {
+        console.log(`Adding track to queue: ${track.name} (Tempo: ${track.tempo} BPM)`);
   
-      // Shuffle the track URIs using Fisher-Yates algorithm
-      const shuffledUris = shuffleArray(trackUris);
-  
-      // Get the current queue
-      const queueResponse = await fetch('https://api.spotify.com/v1/me/player/queue', {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
-      const queueData = await queueResponse.json();
-      const currentQueue = queueData.queue.map(item => item.uri);
-  
-      // Filter out duplicates
-      const uniqueUris = shuffledUris.filter(uri => !currentQueue.includes(uri));
-  
-      // Add unique URIs to the queue
-      for (const uri of uniqueUris) {
-        await fetch(`https://api.spotify.com/v1/me/player/queue?uri=${encodeURIComponent(uri)}`, {
+        await fetch(`https://api.spotify.com/v1/me/player/queue?uri=${encodeURIComponent(track.uri)}`, {
           method: 'POST',
           headers: {
             'Authorization': `Bearer ${token}`
@@ -48,6 +26,26 @@ const shuffleArray = (array) => {
       console.error('Error adding tracks to the queue:', error);
     }
   };
+  
+  const filterUniqueUris = async (uris, token) => {
+    try {
+      const queueResponse = await fetch('https://api.spotify.com/v1/me/player/queue', {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      const queueData = await queueResponse.json();
+      const currentQueue = queueData.queue.map(item => item.uri);
+  
+      // Filter out duplicates
+      const uniqueUris = uris.filter(uri => !currentQueue.includes(uri));
+      return uniqueUris;
+    } catch (error) {
+      console.error('Error filtering unique URIs:', error);
+      return uris;
+    }
+  };
+
 
 const Container = styled.div`
   display: flex;
@@ -159,7 +157,7 @@ function WebPlayback(props) {
     const [playlistName, setPlaylistName] = useState('');
     const [userPlaylists, setUserPlaylists] = useState([]);
     const [searchTerm, setSearchTerm] = useState('');
-
+    const [sortByTempo, setSortByTempo] = useState(false);
 
     useEffect(() => {
 
@@ -201,7 +199,7 @@ function WebPlayback(props) {
                 });
 
             }));
-            addToQueue(1);
+            //addToQueue(1);
             player.connect(); 
 
             const fetchUserPlaylists = async (offset = 0) => {
@@ -233,6 +231,47 @@ function WebPlayback(props) {
         };
     }, []);
 
+    const getPlaylistTracks = async (playlistId, token) => {
+      try {
+        const response = await fetch(`https://api.spotify.com/v1/playlists/${playlistId}/tracks`, {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+        const data = await response.json();
+        return data.items.map(item => item.track);
+      } catch (error) {
+        console.error('Error fetching playlist tracks:', error);
+        return [];
+      }
+    };
+
+    const getTrackTempo = async (track) => {
+      try {
+        const response = await fetch(`https://api.spotify.com/v1/audio-features/${track.id}`, {
+          headers: {
+            'Authorization': `Bearer ${props.token}`
+          }
+        });
+        const data = await response.json();
+        let tempo = data.tempo;
+    
+        // Divide the tempo by 2 if it's above 180.00
+        if (tempo > 180.00) {
+          tempo /= 2;
+        }
+        else if(tempo <80.00)
+        {
+          tempo *= 2;
+        }
+    
+        return tempo;
+      } catch (error) {
+        console.error('Error fetching audio features:', error);
+        return 0;
+      }
+    };
+    
 
     const handleContextInfo = async (context) => {
         if (context && context.type === 'playlist') {
@@ -260,12 +299,30 @@ function WebPlayback(props) {
     }
 
     const handlePlaylistClick = async (playlistId) => {
-        await addToQueue(playlistId, props.token);
-      };
-
+      let tracks = await getPlaylistTracks(playlistId, props.token);
+    
+      if (sortByTempo) {
+        const trackTempos = await Promise.all(
+          tracks.map(async track => {
+            const tempo = await getTrackTempo(track);
+            return { ...track, tempo };
+          })
+        );
+    
+        trackTempos.sort((a, b) => b.tempo - a.tempo);
+        await addTracksToQueue(trackTempos, props.token);
+      } else {
+        // Shuffle the tracks using the shuffleArray function
+        tracks = shuffleArray(tracks);
+        await addTracksToQueue(tracks, props.token);
+      }
+    };
+    
+  
     const filteredPlaylists = userPlaylists.filter(playlist =>
-        playlist.name.toLowerCase().includes(searchTerm.toLowerCase())
-      );
+      playlist.name.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+
 
     if (!is_active) { 
         return (
@@ -301,6 +358,16 @@ function WebPlayback(props) {
             onChange={e => setSearchTerm(e.target.value)}
           />
           <h2>Your Playlists</h2>
+          <div>
+            <label>
+              <input
+                type="checkbox"
+                checked={sortByTempo}
+                onChange={() => setSortByTempo(!sortByTempo)}
+              />
+              Sort by Tempo (Highest to Lowest)
+            </label>
+          </div>
           <PlaylistGrid>
             {filteredPlaylists.map(playlist => (
               <PlaylistItem key={playlist.id} onClick={() => handlePlaylistClick(playlist.id)}>
