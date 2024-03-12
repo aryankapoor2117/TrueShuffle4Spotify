@@ -315,8 +315,12 @@ function WebPlayback(props) {
       const selectedTracks = shuffledTracks.slice(0, 10);
   
       const userId = await getUserId(props.token);
-      const currentDate = new Date().toISOString().split('T')[0];
-      const playlistName = `${currentDate}`;
+      const currentDate = new Date();
+      const formattedDate = `${currentDate.getMonth() + 1}/${currentDate.getDate()}`;
+      const formattedTime = currentDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true });
+      const daysOfWeek = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
+      const dayOfWeek = daysOfWeek[currentDate.getDay()];
+      const playlistName = `${formattedTime} on ${dayOfWeek}, ${formattedDate}`;
       const playlistId = await createPlaylist(userId, playlistName, props.token);
   
       await addTracksToPlaylist(playlistId, selectedTracks, props.token);
@@ -509,7 +513,7 @@ function WebPlayback(props) {
               </Controls>
             </PlayerContainer>
           ) : null}
-          <GenerateButton onClick={generatePlaylist}>Generate Playlist</GenerateButton>
+          <GenerateButton onClick={generatePlaylist}>miss me?</GenerateButton>
           <PlaylistsContainer>
             <SearchBar
               type="text"
