@@ -201,6 +201,22 @@ const TempoToggleLabel = styled.label`
   color: #bdc3c7;
 `;
 
+const GenerateButton = styled.button`
+  background-color: ${props => props.theme.primary};
+  border: none;
+  color: ${props => props.theme.text};
+  font-size: 1.2rem;
+  padding: 0.5rem 1rem;
+  margin-bottom: 1rem;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+
+  &:hover {
+    background-color: ${props => props.theme.secondary};
+  }
+`;
+
 const track = {
     name: "",
     album: {
@@ -223,6 +239,90 @@ function WebPlayback(props) {
     const [userPlaylists, setUserPlaylists] = useState([]);
     const [searchTerm, setSearchTerm] = useState('');
     const [sortByTempo, setSortByTempo] = useState(false);
+
+
+    const getUserId = async (token) => {
+      try {
+        const response = await fetch('https://api.spotify.com/v1/me', {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+        const data = await response.json();
+        return data.id;
+      } catch (error) {
+        console.error('Error fetching user ID:', error);
+        return null;
+      }
+    };
+  
+    const createPlaylist = async (userId, playlistName, token) => {
+      try {
+        const response = await fetch(`https://api.spotify.com/v1/users/${userId}/playlists`, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            name: playlistName,
+            public: false
+          })
+        });
+        const data = await response.json();
+        return data.id;
+      } catch (error) {
+        console.error('Error creating playlist:', error);
+        return null;
+      }
+    };
+  
+    const addTracksToPlaylist = async (playlistId, tracks, token) => {
+      try {
+        const uris = tracks.map(track => track.uri);
+        await fetch(`https://api.spotify.com/v1/playlists/${playlistId}/tracks`, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ uris })
+        });
+      } catch (error) {
+        console.error('Error adding tracks to playlist:', error);
+      }
+    };
+  
+    const generatePlaylist = async () => {
+      const hardcodedPlaylists = ['78kYq0kFZ6lN5OqWGwRkUs', '4Y3XlAdydLgCGolAz3rl3j', '2Z1ruYMnvDxFDE5cHfAAru', '10BJfBF1a2FCZ91D8GL99P', '7f4sZQy30JBCmHCtOqnhHj', '1dYF46MijaJ5itbhf28Nmj' ];
+      //lockedin, hot girls, thinking bout you, baby put it all on me, people ive forgotten, im so faded
+      
+      const allTracks = [];
+  
+      for (const playlistId of hardcodedPlaylists) {
+        const tracks = await getPlaylistTracks(playlistId, props.token);
+        allTracks.push(...tracks);
+      }
+
+      const uniqueTracks = allTracks.reduce((acc, track) => {
+        if (!acc.some(t => t.id === track.id)) {
+          acc.push(track);
+        }
+        return acc;
+      }, []);
+  
+      const shuffledTracks = shuffleArray(allTracks);
+      const selectedTracks = shuffledTracks.slice(0, 10);
+  
+      const userId = await getUserId(props.token);
+      const currentDate = new Date().toISOString().split('T')[0];
+      const playlistName = `${currentDate}`;
+      const playlistId = await createPlaylist(userId, playlistName, props.token);
+  
+      await addTracksToPlaylist(playlistId, selectedTracks, props.token);
+    };    
+
+
 
     useEffect(() => {
 
@@ -409,6 +509,7 @@ function WebPlayback(props) {
               </Controls>
             </PlayerContainer>
           ) : null}
+          <GenerateButton onClick={generatePlaylist}>Generate Playlist</GenerateButton>
           <PlaylistsContainer>
             <SearchBar
               type="text"
