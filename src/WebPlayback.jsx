@@ -266,7 +266,8 @@ function WebPlayback(props) {
           },
           body: JSON.stringify({
             name: playlistName,
-            public: false
+            description: "im thinking about you too",
+            public: true
           })
         });
         const data = await response.json();
@@ -312,7 +313,12 @@ function WebPlayback(props) {
       }, []);
   
       const shuffledTracks = shuffleArray(allTracks);
-      const selectedTracks = shuffledTracks.slice(0, 10);
+      const selectedTracks = [];
+      for (let i = 0; i < 10; i++) {
+        const randomIndex = Math.floor(Math.random() * shuffledTracks.length);
+        selectedTracks.push(shuffledTracks[randomIndex]);
+        shuffledTracks.splice(randomIndex, 1); // Remove the selected track from the array
+      }
   
       const userId = await getUserId(props.token);
       const currentDate = new Date();
