@@ -389,20 +389,11 @@ function WebPlayback(props) {
     );
 
 
-    if (!is_active) { 
-        return (
-            <>
-                <div className="container">
-                    <div className="main-wrapper">
-                        <b> Instance not active. Transfer your playback using your Spotify app </b>
-                    </div>
-                </div>
-            </>)
-    } else {
-      return (
-        <ThemeProvider theme={theme}>
-          <Container>
-            <GlobalStyle />
+    return (
+      <ThemeProvider theme={theme}>
+        <Container>
+          <GlobalStyle />
+          {is_active ? (
             <PlayerContainer>
               <NowPlaying>
                 <Cover src={current_track.album.images[0].url} alt={current_track.name} />
@@ -417,37 +408,37 @@ function WebPlayback(props) {
                 <Button onClick={() => player.nextTrack()}>&gt;&gt;</Button>
               </Controls>
             </PlayerContainer>
-            <PlaylistsContainer>
-              <SearchBar
-                type="text"
-                placeholder="Search playlists..."
-                value={searchTerm}
-                onChange={e => setSearchTerm(e.target.value)}
+          ) : null}
+          <PlaylistsContainer>
+            <SearchBar
+              type="text"
+              placeholder="Search playlists..."
+              value={searchTerm}
+              onChange={e => setSearchTerm(e.target.value)}
+            />
+            <TempoToggle>
+              <input
+                type="checkbox"
+                checked={sortByTempo}
+                onChange={() => setSortByTempo(!sortByTempo)}
               />
-              <TempoToggle>
-                <input
-                  type="checkbox"
-                  checked={sortByTempo}
-                  onChange={() => setSortByTempo(!sortByTempo)}
-                />
-                <TempoToggleLabel>Sort by Tempo (Highest to Lowest)</TempoToggleLabel>
-              </TempoToggle>
-              <PlaylistGrid>
-                {filteredPlaylists.map(playlist => (
-                  <PlaylistItem key={playlist.id} onClick={() => handlePlaylistClick(playlist.id)}>
-                    <PlaylistCover
-                      src={playlist.images[0]?.url || 'https://via.placeholder.com/150'}
-                      alt={playlist.name}
-                    />
-                    <PlaylistName>{playlist.name}</PlaylistName>
-                  </PlaylistItem>
-                ))}
-              </PlaylistGrid>
-            </PlaylistsContainer>
-          </Container>
-        </ThemeProvider>
-      );
-    }
+              <TempoToggleLabel>Sort by Tempo (Highest to Lowest)</TempoToggleLabel>
+            </TempoToggle>
+            <PlaylistGrid>
+              {filteredPlaylists.map(playlist => (
+                <PlaylistItem key={playlist.id} onClick={() => handlePlaylistClick(playlist.id)}>
+                  <PlaylistCover
+                    src={playlist.images[0]?.url || 'https://via.placeholder.com/150'}
+                    alt={playlist.name}
+                  />
+                  <PlaylistName>{playlist.name}</PlaylistName>
+                </PlaylistItem>
+              ))}
+            </PlaylistGrid>
+          </PlaylistsContainer>
+        </Container>
+      </ThemeProvider>
+    );
   }
 
 export default WebPlayback
