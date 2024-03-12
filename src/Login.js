@@ -1,7 +1,9 @@
 import React from 'react';
 
-const clientId = '51c41fdf0b4e45c5b99dbb0795aabbf3';
-const redirectUri = 'http://localhost:3000/callback';
+const clientId = process.env.REACT_APP_SPOTIFY_CLIENT_ID;
+const redirectUri = process.env.NODE_ENV === 'production'
+  ? process.env.REACT_APP_SPOTIFY_REDIRECT_URI_PROD
+  : process.env.REACT_APP_SPOTIFY_REDIRECT_URI_LOCAL;
 const scopes = 'streaming user-read-email user-read-private user-read-currently-playing playlist-read-private playlist-read-collaborative user-read-playback-state user-modify-playback-state';
 
 const LOGIN_URL = `https://accounts.spotify.com/authorize?client_id=${clientId}&response_type=token&redirect_uri=${encodeURIComponent(redirectUri)}&scope=${encodeURIComponent(scopes)}`;
