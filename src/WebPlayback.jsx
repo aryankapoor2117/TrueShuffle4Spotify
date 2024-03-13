@@ -374,6 +374,12 @@ function WebPlayback(props) {
                 console.log('Ready with Device ID', device_id);
                 checkPlaybackState(device_id);
             });
+            
+            player.addListener('not_ready', ({ device_id }) => {
+              console.log('Device ID has gone offline', device_id);
+              // If the player is not ready, check the playback state again after 5 seconds
+              setTimeout(() => checkPlaybackState(device_id), 5000);
+            });
 
             const checkPlaybackState = async (deviceId) => {
               try {
@@ -391,9 +397,13 @@ function WebPlayback(props) {
                   } else {
                     setActive(false);
                   }
+                } else {
+                  // If the response is not ok, check again after 5 seconds
+                  setTimeout(() => checkPlaybackState(deviceId), 5000);
                 }
               } catch (error) {
                 console.error('Error checking playback state:', error);
+                setTimeout(() => checkPlaybackState(deviceId), 5000);
               }
             };
 
