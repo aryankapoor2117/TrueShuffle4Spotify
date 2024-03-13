@@ -277,6 +277,24 @@ function WebPlayback(props) {
         return null;
       }
     };
+
+    const transferPlayback = async (deviceId) => {
+      try {
+        await fetch('https://api.spotify.com/v1/me/player', {
+          method: 'PUT',
+          headers: {
+            'Authorization': `Bearer ${props.token}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            device_ids: [deviceId],
+            play: true,
+          }),
+        });
+      } catch (error) {
+        console.error('Error transferring playback:', error);
+      }
+    };
   
     const addTracksToPlaylist = async (playlistId, tracks, token) => {
       try {
@@ -354,7 +372,30 @@ function WebPlayback(props) {
 
             player.addListener('ready', ({ device_id }) => {
                 console.log('Ready with Device ID', device_id);
+                checkPlaybackState(device_id);
             });
+
+            const checkPlaybackState = async (deviceId) => {
+              try {
+                const response = await fetch('https://api.spotify.com/v1/me/player', {
+                  headers: {
+                    'Authorization': `Bearer ${props.token}`,
+                  },
+                });
+          
+                if (response.ok) {
+                  const data = await response.json();
+                  if (data.is_playing) {
+                    await transferPlayback(deviceId);
+                    setActive(true);
+                  } else {
+                    setActive(false);
+                  }
+                }
+              } catch (error) {
+                console.error('Error checking playback state:', error);
+              }
+            };
 
             player.addListener('not_ready', ({ device_id }) => {
                 console.log('Device ID has gone offline', device_id);
@@ -369,8 +410,12 @@ function WebPlayback(props) {
                 setTrack(state.track_window.current_track);
                 setPaused(state.paused);
 
-                player.getCurrentState().then( state => { 
-                    (!state)? setActive(false) : setActive(true) 
+                player.getCurrentState().then((state) => {
+                  if (!state) {
+                    setActive(false);
+                  } else {
+                    setActive(true);
+                  }
                 });
 
             }));
